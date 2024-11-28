@@ -121,14 +121,20 @@ function prepareMessage(potlyData: draw.PlotlyData[], colorTheme: vscode.ColorTh
 	return message;
 }
 
+async function parseData(dbg:Debugger, node:string): Promise<any>{
+        let type = (await dbg.evaluate("currentApp"))?.type;
+		return type;
+}
+
 export function activate(context: vscode.ExtensionContext) {
-	
+
 	const debugHelper: Debugger = new Debugger(context);
 	const graphicalWatch: GraphicalWatch = new GraphicalWatch();
 	const webview: Webview = new Webview(context);
 
+
 	// TODO: get variables asynchroniously?
-	
+
 	debugHelper.onStopped(async () => {
 		// const language = debugHelper.language();
 		// const machineInfo = await debugHelper.machineInfo();
@@ -138,8 +144,29 @@ export function activate(context: vscode.ExtensionContext) {
 		// 	console.log('pointer size: ' + machineInfo.pointerSize.toString());
 		// 	console.log(machineInfo.endianness === Endianness.Little ? 'little endian' : 'big endian');
 		// }
+		graphicalWatch.refreshAll();
+		let root = "currentAPP"
+		let eva = (await debugHelper.evaluate("currentApp"));
+        let type = (await debugHelper.evaluate("currentApp"))?.type;
+        let typeDetail = await debugHelper.evaluate('-exec ptype /rmt ' + type);
+		parseData(debugHelper, root);
+		//"type = struct RApp_t {\n    int priority;\n    int visible;\n    Bool endRender;\n    float ratio_x;\n    float ratio_y;\n    RWindow *windows;\n    RApp *back;\n    long long int message_ptr;\n    char *MessageBuffer;\n} *\n"
+		var data1 = {
+			name: "currentApp",
+			tooltip: {
+				format:""
+			}
+			children: [
+				{
+					name: root,
+					children: [{ name: 'FlareVis', value: 4116 }]
 
-		if (graphicalWatch.variables.length > 0)
+				},
+			]
+		};
+
+		webview.showAndPostMessage(data1);
+		/* if (graphicalWatch.variables.length > 0)
 			load.types.update(debugHelper);
 
 		for (let variable of graphicalWatch.variables)
@@ -156,9 +183,10 @@ export function activate(context: vscode.ExtensionContext) {
 		//graphicalWatch.refreshAll();
 
 		const message = prepareMessage(drawableData, vscode.window.activeColorTheme);
+		webview.showAndPostMessage(message);
 		if (message.plots.length > 0) {
 			webview.showAndPostMessage(message);
-		}
+		} */
 
 		// let expr2 = await dbg.evaluate("&arrd[0]");
 		// if (expr2 && expr2.memoryReference) {
@@ -235,4 +263,3 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
 
 }
-

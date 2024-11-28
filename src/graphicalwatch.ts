@@ -59,7 +59,7 @@ export class GraphicalWatchEventData {
 
 export class GraphicalWatchProvider implements vscode.TreeDataProvider<GraphicalWatchVariable> {
 	constructor() { }
-	
+
 	private _onDidChangeTreeData: vscode.EventEmitter<TreeDataEventParameter> = new vscode.EventEmitter<TreeDataEventParameter>();
 	readonly onDidChangeTreeData: vscode.Event<TreeDataEventParameter> = this._onDidChangeTreeData.event;
 
@@ -121,14 +121,14 @@ export class GraphicalWatchProvider implements vscode.TreeDataProvider<Graphical
 
 	getChildren(element?: GraphicalWatchVariable): vscode.ProviderResult<GraphicalWatchVariable[]> {
 		if (element)
-			return Promise.resolve([]);	
+			return Promise.resolve([]);
 		else
 			return Promise.resolve(this._variables);
 	}
 
 	get variables(): GraphicalWatchVariable[] { return this._variables; }
 
-	private _variables: GraphicalWatchVariable[] = [];
+	private _variables: GraphicalWatchVariable[] = [ new GraphicalWatchVariable("currentApp", 1)];
 	private _colors: Colors = new Colors();
 }
 

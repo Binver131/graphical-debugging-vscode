@@ -40,7 +40,7 @@ export class SessionInfo {
         if (sessionType === 'rdbg')
             return 'watch';
         else
-            return undefined; 
+            return undefined;
     }
 
     private _getDebugger(): string | undefined {
@@ -64,7 +64,7 @@ export class SessionInfo {
 
     public language: Language | undefined;
     public debugger: string | undefined;
-    public context: string | undefined;    
+    public context: string | undefined;
 }
 
 export enum Endianness { Little, Big };
@@ -211,7 +211,7 @@ export class Debugger {
                 expression = '*(unsigned long*)"abc"';
                 expectedLittle = '6513249';
                 expectedBig = '1633837824';
-            } else if (expr3.result === '8') { 
+            } else if (expr3.result === '8') {
                 expression = '*(unsigned long*)"abcdefg"';
                 expectedLittle = '29104508263162465';
                 expectedBig = '7017280452245743360';
@@ -294,7 +294,9 @@ export class Debugger {
     }
 
     async getType(expression: string): Promise<string | undefined> {
+        let eva = (await this.evaluate(expression));
         let type = (await this.evaluate(expression))?.type;
+        let typeDetail = await this.evaluate('-exec ptype /rmt ' + type);
         if (this._isPythonError(type))
             return undefined;
         if (this._isRubyError(type))
@@ -303,7 +305,7 @@ export class Debugger {
             const expr = await this.evaluate('(' + expression + ').constructor.name');
             if (expr?.type !== undefined && expr?.result !== undefined) { // type === 'string'?
                 type = expr.result.substr(1, expr.result.length - 2);
-            }            
+            }
         }
         return type;
     }
@@ -350,7 +352,7 @@ export class Debugger {
         }
         return result;
     }
-    
+
     async evaluate(expression: string, context: string | undefined = undefined) {
         if (this.sessionInfo === undefined)
             return undefined;
