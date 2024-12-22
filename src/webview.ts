@@ -86,7 +86,7 @@ export class Webview {
 			if(err) {
 				return `<p>Error loading webview content.</p>`;
 			}
-			 data;
+			 return data;
 		});
 	}
 

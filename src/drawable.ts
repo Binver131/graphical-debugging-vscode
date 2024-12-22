@@ -246,3 +246,20 @@ export class Polygon extends Drawable {
         return result;
     }
 };
+
+
+export class GraphicNode extends Drawable {
+    constructor(
+        public readonly x: number,
+        public readonly y: number,
+        public readonly system: System,
+        public readonly text: string) {
+        super();
+    }
+    toPlotly(colorId: number): PlotlyData {
+        const trace = this.system!== System.Geographic
+           ? {
+                x: [this.x],
+           }
+        }
+}

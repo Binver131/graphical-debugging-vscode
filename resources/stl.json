@@ -173,6 +173,10 @@
                 "finish": "$this.__end_"
             },
             "_comment": "llvm/libc++"
+        },
+        {
+            "type": "struct Gcomponent_t *",
+            "kind": "component"
         }
     ]
 }

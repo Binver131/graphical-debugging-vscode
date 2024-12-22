@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as util from './util'
+import * as RenderTree from './RenderTreePasre'
 
 function parseTParams(type: string, beg: string = '<', end: string = '>', sep: string = ',') : string[] {
     let result: string[] = [];
@@ -70,7 +71,7 @@ function addSpacesInTemplates(str: string): string {
 
 // function parseSubscripts(type: string, beg: string = '[', end: string = ']') : string[] {
 //     let result: string[] = [];
-//     // TODO:    
+//     // TODO:
 //     return result;
 // }
 
@@ -134,7 +135,7 @@ export class Expression
                     this._parts.push(new ExpressionString(expression.substr(index, match.index - index)));
                     index = match.index;
                 }
-                
+
                 if (match[0] === '$this') {
                     this._parts.push(new ExpressionThis());
                     index = match.index + 5;
@@ -165,7 +166,7 @@ export class Expression
     toString(variable: Variable, parameter: number | undefined = undefined): string {
         let result: string = '';
         for (let part of this._parts) {
-            result += part.toString(variable, parameter);            
+            result += part.toString(variable, parameter);
         }
         // TODO: do this only for C++ ?
         // It is possible that this should depend on the debugger
@@ -381,7 +382,7 @@ export class LinkedList extends Container
         const size = await this.size(dbg, variable);
         if (! (size > 0)) // also handle NaN
             return;
-        
+
         const headName = '(' + this._head.toString(variable) + ')';
         // TEMP: The original type is used by expression to get Tparams, not the node's type
         let nodeVar = new Variable(headName, variable.type);
@@ -416,6 +417,17 @@ export class Loader {
         return undefined;
     }
 }
+
+export class Component extends Loader{
+    constructor(private _name: string) {
+        super();
+    }
+
+    async load(dbg: debug.Debugger, variable: Variable): Promise<draw.Drawable | undefined> {
+        return new draw.Component(this._name);
+    }
+}
+
 
 // Containers of drawables
 
@@ -509,7 +521,7 @@ export class DynamicGeometries extends ContainerLoader {
             if (elLoad === undefined) {
                 elLoad = await getLoader(dbg, v);
                 if (elLoad === undefined)
-                    return undefined;    
+                    return undefined;
                 this._loaders.set(elType, elLoad);
             }
             const d = await elLoad.load(dbg, v);
@@ -616,7 +628,7 @@ export class Box extends Geometry {
         const min = await this._minLoad?.load(dbg, minVar) as draw.Point;
         const max = await this._maxLoad?.load(dbg, maxVar) as draw.Point;
         if (min == undefined || max === undefined)
-            return undefined;        
+            return undefined;
         return loadBox(min.x, min.y, max.x, max.y, min.system);
     }
     private _minLoad: Point | undefined = undefined;
@@ -1081,13 +1093,21 @@ export async function getLoader(dbg: debug.Debugger,
                                 variable: Variable,
                                 kindPred: KindPredicate = allKinds,
                                 elemKindPred: KindPredicate = nonContainers): Promise<Loader | undefined> {
-    
+
     for await (const [entry, type] of matchWithAliases(dbg, variable.type)) {
         if (! kindPred(entry.kind)) {
             continue;
         }
         variable.type = type; // If alias is matched then the type has to be changed
-        if (entry.kind === 'container') {
+        if(entry.kind === 'component'){
+            const component: Component | undefined = await _getComponent(dbg, variable, entry);
+            if (component !== undefined) {
+                const elements = await getElements(dbg, variable, component, elemKindPred);
+                if (elements !== undefined)
+                    return elements;
+            }
+        }
+        else if (entry.kind === 'container') {
             const container: Container | undefined = await _getContainer(dbg, variable, entry);
             if (container !== undefined) {
                 const elements = await getElements(dbg, variable, container, elemKindPred);
